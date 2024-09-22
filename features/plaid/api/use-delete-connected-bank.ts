@@ -9,29 +9,38 @@ type ResponseType = InferResponseType<typeof client.api.plaid["connected-bank"][
 export const useDeleteConnectedBank = () => {
     const queryClient = useQueryClient();
 
-    const mutation = useMutation<
-        ResponseType,
-        Error
-    >({
+    const mutation = useMutation<ResponseType, Error>({
         mutationFn: async () => {
             const response = await client.api.plaid["connected-bank"].$delete();
 
             if (!response.ok) {
-                throw Error("Faild to delete connected bank");
+                throw new Error("Failed to delete connected bank");
             }
 
             return await response.json();
         },
+        onMutate: async () => {
+            await queryClient.cancelQueries({ queryKey: ["connected-bank"] });
+            const previousBankData = queryClient.getQueryData(["connected-bank"]);
+            queryClient.setQueryData(["connected-bank"], null);
+            return { previousBankData };
+        },
         onSuccess: () => {
             toast.success("Connected bank deleted");
-        },
-        onError: () => {
-            toast.error("Faild to delete connected bank");
             queryClient.invalidateQueries({ queryKey: ["connected-bank"] });
             queryClient.invalidateQueries({ queryKey: ["summary"] });
             queryClient.invalidateQueries({ queryKey: ["transactions"] });
             queryClient.invalidateQueries({ queryKey: ["accounts"] });
             queryClient.invalidateQueries({ queryKey: ["categories"] });
+        },
+        onError: () => {
+            toast.error("Failed to delete connected bank");
+            queryClient.invalidateQueries({ queryKey: ["connected-bank"] });
+            queryClient.invalidateQueries({ queryKey: ["summary"] });
+            queryClient.invalidateQueries({ queryKey: ["transactions"] });
+            queryClient.invalidateQueries({ queryKey: ["accounts"] });
+            queryClient.invalidateQueries({ queryKey: ["categories"] });
+
         },
     });
 

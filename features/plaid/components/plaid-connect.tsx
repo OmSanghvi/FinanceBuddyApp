@@ -10,7 +10,6 @@ import { useExchangePublicToken } from "@/features/plaid/api/use-exchange-public
 
 export const PlaidConnect = () => {
     const [token, setToken] = useState<string | null>(null);
-
     const createLinkToken = useCreateLinkToken();
     const exchangePublicToken = useExchangePublicToken();
 
@@ -18,6 +17,9 @@ export const PlaidConnect = () => {
         createLinkToken.mutate(undefined, {
             onSuccess: ({ data }) => {
                 setToken(data);
+            },
+            onError: (error) => {
+                console.error("Error creating link token:", error);
             },
         });
     });
@@ -32,16 +34,16 @@ export const PlaidConnect = () => {
         env: "sandbox",
     });
 
-
-
     const onClick = () => {
-
-        plaid.open();
+        if (token) {
+            plaid.open();
+        }
     };
 
     const isDisabled =
-        !plaid.ready ||
-        exchangePublicToken.isPending
+        !plaid.ready || 
+        exchangePublicToken.isPending || 
+        !token;
 
     return (
         <Button
@@ -52,5 +54,5 @@ export const PlaidConnect = () => {
         >
             Connect
         </Button>
-    )
-}
+    );
+};

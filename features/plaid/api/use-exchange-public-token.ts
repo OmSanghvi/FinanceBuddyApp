@@ -19,7 +19,7 @@ export const useExchangePublicToken = () => {
             const response = await client.api.plaid["exchange-public-token"].$post({ json });
 
             if (!response.ok) {
-                throw Error("Faild to exchange public token");
+                throw Error("Failed to exchange public token");
             }
 
             return await response.json();
@@ -33,7 +33,7 @@ export const useExchangePublicToken = () => {
             queryClient.invalidateQueries({ queryKey: ["categories"] });
         },
         onError: () => {
-            toast.error("Faild to exchange public token");
+            toast.error("Failed to exchange public token");
         },
     });
 

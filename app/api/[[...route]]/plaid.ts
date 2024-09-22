@@ -57,53 +57,6 @@ const app = new Hono()
             return c.json({ data: connectedBank || null });
         },
     )
-    .delete(
-        "/connected-bank",
-        clerkMiddleware(),
-        async (c) => {
-            const auth = getAuth(c);
-
-            if (!auth?.userId) {
-                return c.json({ error: "Unauthorized" }, 401);
-            }
-
-            const [connectedBank] = await db
-                .delete(connectedBanks)
-                .where(
-                    eq(
-                        connectedBanks.userId,
-                        auth.userId
-                    ),
-                )
-                .returning({
-                    id: connectedBanks.id
-                });
-
-            if (!connectedBank) {
-                return c.json({ error: "Not found" }, 404);
-            }
-
-            await db
-                .delete(accounts)
-                .where(
-                    and(
-                        eq(accounts.userId, auth.userId),
-                        isNotNull(accounts.plaidId),
-                    ),
-                );
-
-            await db
-                .delete(categories)
-                .where(
-                    and(
-                        eq(categories.userId, auth.userId),
-                        isNotNull(categories.plaidId),
-                    ),
-                );
-
-            return c.json({ data: connectedBank });
-        },
-    )
     .post("/create-link-token",
         clerkMiddleware(),
         async (c) => {
@@ -117,7 +70,7 @@ const app = new Hono()
                 user: {
                     client_user_id: auth.userId,
                 },
-                client_name: "Finance Tracker SaaS",
+                client_name: "Vorifi",
                 products: [Products.Transactions],
                 country_codes: [CountryCode.Us],
                 language: "en",
@@ -219,6 +172,53 @@ const app = new Hono()
         }
 
         return c.json({ ok: true }, 200);
+    },
+)
+.delete(
+    "/connected-bank",
+    clerkMiddleware(),
+    async (c) => {
+        const auth = getAuth(c);
+
+        if (!auth?.userId) {
+            return c.json({ error: "Unauthorized" }, 401);
+        }
+
+        const [connectedBank] = await db
+            .delete(connectedBanks)
+            .where(
+                eq(
+                    connectedBanks.userId,
+                    auth.userId
+                ),
+            )
+            .returning({
+                id: connectedBanks.id
+            });
+
+        if (!connectedBank) {
+            return c.json({ error: "Not found" }, 404);
+        }
+
+        await db
+            .delete(accounts)
+            .where(
+                and(
+                    eq(accounts.userId, auth.userId),
+                    isNotNull(accounts.plaidId),
+                ),
+            );
+
+        await db
+            .delete(categories)
+            .where(
+                and(
+                    eq(categories.userId, auth.userId),
+                    isNotNull(categories.plaidId),
+                ),
+            );
+
+        return c.json({ data: connectedBank });
     },
 )
 
